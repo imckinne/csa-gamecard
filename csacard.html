@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Generator Form</title>
+    <!-- Load html2pdf.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        input, textarea { width: 100%; padding: 8px; margin-top: 5px; }
+        button { padding: 10px 15px; background: #007bff; color: white; border: none; cursor: pointer; }
+        
+        /* The template styled for the final PDF, hidden from the UI */
+        #pdf-template { 
+            display: none; 
+            padding: 40px; 
+            background: white; 
+            color: black; 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Generate Your Document</h2>
+        <div class="input-group">
+            <label for="userName">Full Name:</label>
+            <input type="text" id="userName" placeholder="John Doe">
+        </div>
+        <div class="input-group">
+            <label for="userProject">Project Description:</label>
+            <textarea id="userProject" rows="4" placeholder="Describe the project..."></textarea>
+        </div>
+        <button onclick="buildAndDownloadPDF()">Download PDF</button>
+    </div>
+
+    <!-- This is the raw HTML structure that will be converted to PDF -->
+    <div id="pdf-template">
+        <h1>Project Summary</h1>
+        <hr>
+        <p><strong>Prepared for:</strong> <span id="outName"></span></p>
+        <p><strong>Description:</strong></p>
+        <p id="outProject"></p>
+        <br>
+        <p><em>Document generated automatically on <span id="outDate"></span>.</em></p>
+    </div>
+
+    <script>
+        function buildAndDownloadPDF() {
+            // 1. Retrieve the user's input
+            const name = document.getElementById('userName').value;
+            const project = document.getElementById('userProject').value;
+            const date = new Date().toLocaleDateString();
+
+            // 2. Inject the input into the hidden PDF template
+            document.getElementById('outName').innerText = name || 'N/A';
+            document.getElementById('outProject').innerText = project || 'No description provided.';
+            document.getElementById('outDate').innerText = date;
+
+            // 3. Select the template and make it temporarily visible for the engine
+            const element = document.getElementById('pdf-template');
+            element.style.display = 'block';
+
+            // 4. Set PDF formatting options
+            const options = {
+                margin:       0.5,
+                filename:     'Project_Summary.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 }, // Higher scale for better text resolution
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            // 5. Generate the PDF, then hide the template again
+            html2pdf().set(options).from(element).save().then(() => {
+                element.style.display = 'none';
+            });
+        }
+    </script>
+
+</body>
+</html>
