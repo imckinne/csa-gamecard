@@ -1,2 +1,2 @@
-# csa-gamecard
-Overlay gamecard for Car Soccer Association stream
+# CSA-gamecard
+Overlay game card for Car Soccer Association stream
