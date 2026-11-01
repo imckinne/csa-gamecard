@@ -3,82 +3,324 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Generator Form</title>
-    <!-- Load html2pdf.js from CDN -->
+    <title>Stream Overlay Generator</title>
+    
+    <!-- Load Tailwind CSS for UI styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Load html2pdf.js for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        .container { max-width: 600px; margin-bottom: 20px; }
-        .input-group { margin-bottom: 15px; }
-        input, textarea { width: 100%; padding: 8px; margin-top: 5px; }
-        button { padding: 10px 15px; background: #007bff; color: white; border: none; cursor: pointer; }
+        /* 
+         * Custom styles for the PDF template / Live Preview. 
+         * Fixed strictly at 1920x250px to match standard stream overlay dimensions.
+         */
+        #pdf-template {
+            width: 1920px;
+            height: 250px;
+            background: linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            box-sizing: border-box;
+            border-top: 8px solid #2563eb;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            transform-origin: center center;
+            /* Shadow for the preview mode */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+        }
         
-        /* The template styled for the final PDF, hidden from the UI */
-        #pdf-template { 
-            display: none; 
-            padding: 40px; 
-            background: white; 
-            color: black; 
+        .overlay-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 100%;
+            padding: 0 120px;
+        }
+
+        .team-logo {
+            height: 170px;
+            width: 170px;
+            object-fit: contain;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.6));
+            opacity: 0.2; /* Default faded state until selected */
+            transition: opacity 0.3s ease;
+        }
+        
+        .team-logo.active {
+            opacity: 1.0;
+        }
+
+        .center-wrapper {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 210px;
+            width: 210px;
+            background: radial-gradient(circle, rgba(30,41,59,0.8) 0%, rgba(15,23,42,0) 70%);
+            border-radius: 50%;
+        }
+
+        .center-logo {
+            height: 190px;
+            width: 190px;
+            object-fit: contain;
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.8));
+        }
+        
+        .glow-effect {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 250px;
+            background: radial-gradient(ellipse at center, rgba(37, 99, 235, 0.3) 0%, rgba(15,23,42,0) 60%);
+            pointer-events: none;
+        }
+
+        /* Message Box Transitions */
+        #messageBox {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        #messageBox.hidden-msg {
+            opacity: 0;
+            transform: translate(-50%, 20px);
+            pointer-events: none;
         }
     </style>
 </head>
-<body>
+<body class="bg-slate-900 h-screen w-screen overflow-hidden text-slate-200 flex flex-col md:flex-row font-sans antialiased">
 
-    <div class="container">
-        <h2>Generate Your Document</h2>
-        <div class="input-group">
-            <label for="userName">Full Name:</label>
-            <input type="text" id="userName" placeholder="John Doe">
+    <!-- Left Sidebar: Settings Panel -->
+    <aside class="w-full md:w-96 flex-shrink-0 bg-slate-800 border-r border-slate-700 flex flex-col h-full z-10 shadow-2xl">
+        <div class="bg-gradient-to-r from-blue-700 to-indigo-800 p-6 text-white">
+            <h1 class="text-2xl font-bold tracking-tight">Overlay Builder</h1>
+            <p class="text-blue-200 text-sm mt-1">Configure your match overlay</p>
         </div>
-        <div class="input-group">
-            <label for="userProject">Project Description:</label>
-            <textarea id="userProject" rows="4" placeholder="Describe the project..."></textarea>
+
+        <div class="p-6 space-y-6 flex-1 overflow-y-auto">
+            
+            <!-- Left Team Logo Selection -->
+            <div>
+                <label for="leftLogoSelect" class="block text-sm font-medium text-slate-300 mb-2">Left Team Logo</label>
+                <select id="leftLogoSelect" onchange="updatePreview()" class="w-full px-4 py-3 rounded-lg border border-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm bg-slate-700 text-white">
+                    <option value="" disabled selected>-- Select Left Team --</option>
+                    <option value="AKR.png">AKR</option>
+                    <option value="ANC.png">ANC</option>
+                    <option value="ASH.png">ASH</option>
+                    <option value="ATL.png">ATL</option>
+                    <option value="BAL.png">BAL</option>
+                    <option value="CHI.png">CHI</option>
+                    <option value="CIN.png">CIN</option>
+                    <option value="DEN.png">DEN</option>
+                    <option value="DET.png">DET</option>
+                    <option value="EDM.png">EDM</option>
+                </select>
+            </div>
+
+            <!-- Right Team Logo Selection -->
+            <div>
+                <label for="rightLogoSelect" class="block text-sm font-medium text-slate-300 mb-2">Right Team Logo</label>
+                <select id="rightLogoSelect" onchange="updatePreview()" class="w-full px-4 py-3 rounded-lg border border-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm bg-slate-700 text-white">
+                    <option value="" disabled selected>-- Select Right Team --</option>
+                    <option value="AKR.png">AKR</option>
+                    <option value="ANC.png">ANC</option>
+                    <option value="ASH.png">ASH</option>
+                    <option value="ATL.png">ATL</option>
+                    <option value="BAL.png">BAL</option>
+                    <option value="CHI.png">CHI</option>
+                    <option value="CIN.png">CIN</option>
+                    <option value="DEN.png">DEN</option>
+                    <option value="DET.png">DET</option>
+                    <option value="EDM.png">EDM</option>
+                </select>
+            </div>
+
         </div>
-        <button onclick="buildAndDownloadPDF()">Download PDF</button>
+
+        <!-- Action Area -->
+        <div class="p-6 border-t border-slate-700 bg-slate-800/50">
+            <button onclick="buildAndDownloadPDF()" id="downloadBtn" 
+                class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg hover:shadow-blue-500/25 transition-all active:scale-[0.98]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download Overlay PDF
+            </button>
+        </div>
+    </aside>
+
+    <!-- Right Main: Live Preview Panel -->
+    <main class="flex-1 bg-slate-900 flex flex-col relative overflow-hidden">
+        <div class="absolute top-6 left-6 z-10 flex items-center gap-2 text-slate-400">
+            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span class="text-sm font-semibold tracking-wide uppercase">Live Preview</span>
+        </div>
+        
+        <!-- Wrapper to center and scale the fixed 1920x250 template -->
+        <div id="preview-wrapper" class="flex-1 w-full h-full flex items-center justify-center p-8">
+            
+            <!-- THE PDF TEMPLATE (Also used as the live preview) -->
+            <div id="pdf-template">
+                <div class="glow-effect"></div>
+                
+                <div class="overlay-content">
+                    <!-- Left Logo -->
+                    <img id="outLeftLogo" class="team-logo" src="" alt="Left Team">
+                    
+                    <!-- Center CSA Logo (Required) -->
+                    <div class="center-wrapper">
+                        <img src="csa5.png" class="center-logo" alt="CSA League Logo">
+                    </div>
+
+                    <!-- Right Logo -->
+                    <img id="outRightLogo" class="team-logo" src="" alt="Right Team">
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Custom Message Box (Alert Replacement) -->
+    <div id="messageBox" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-slate-800 border-l-4 border-red-500 text-white px-6 py-4 rounded shadow-2xl hidden-msg flex items-center gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span id="messageText" class="font-medium"></span>
     </div>
 
-    <!-- This is the raw HTML structure that will be converted to PDF -->
-    <div id="pdf-template">
-        <h1>Project Summary</h1>
-        <hr>
-        <p><strong>Prepared for:</strong> <span id="outName"></span></p>
-        <p><strong>Description:</strong></p>
-        <p id="outProject"></p>
-        <br>
-        <p><em>Document generated automatically on <span id="outDate"></span>.</em></p>
-    </div>
-
+    <!-- Application Logic -->
     <script>
+        // Custom message system
+        let messageTimeout;
+        function showMessage(msg, isError = true) {
+            const box = document.getElementById('messageBox');
+            const text = document.getElementById('messageText');
+            
+            text.innerText = msg;
+            
+            // Adjust border color based on type
+            box.classList.remove('border-red-500', 'border-blue-500');
+            box.classList.add(isError ? 'border-red-500' : 'border-blue-500');
+
+            box.classList.remove('hidden-msg');
+            
+            clearTimeout(messageTimeout);
+            messageTimeout = setTimeout(() => {
+                box.classList.add('hidden-msg');
+            }, 4000);
+        }
+
+        // Live updating the preview
+        function updatePreview() {
+            const leftSelect = document.getElementById('leftLogoSelect').value;
+            const rightSelect = document.getElementById('rightLogoSelect').value;
+            
+            const leftImg = document.getElementById('outLeftLogo');
+            const rightImg = document.getElementById('outRightLogo');
+
+            if (leftSelect) {
+                leftImg.src = leftSelect;
+                leftImg.classList.add('active');
+            }
+            if (rightSelect) {
+                rightImg.src = rightSelect;
+                rightImg.classList.add('active');
+            }
+        }
+
+        // Handle scaling the 1920x250 div to fit nicely inside the preview wrapper
+        function resizePreview() {
+            const wrapper = document.getElementById('preview-wrapper');
+            const template = document.getElementById('pdf-template');
+            
+            // 40px padding subtraction
+            const wrapperWidth = wrapper.clientWidth - 80; 
+            const wrapperHeight = wrapper.clientHeight - 80;
+            
+            // Calculate scale required to fit both width and height
+            const scaleX = wrapperWidth / 1920;
+            const scaleY = wrapperHeight / 250;
+            const scale = Math.min(scaleX, scaleY);
+            
+            template.style.transform = `scale(${scale})`;
+        }
+
+        // Listen for window resize to keep preview perfectly fitted
+        window.addEventListener('resize', resizePreview);
+        // Initial call
+        window.addEventListener('DOMContentLoaded', resizePreview);
+
+        // PDF Generation
         function buildAndDownloadPDF() {
-            // 1. Retrieve the user's input
-            const name = document.getElementById('userName').value;
-            const project = document.getElementById('userProject').value;
-            const date = new Date().toLocaleDateString();
+            const leftSelect = document.getElementById('leftLogoSelect').value;
+            const rightSelect = document.getElementById('rightLogoSelect').value;
+            const btn = document.getElementById('downloadBtn');
 
-            // 2. Inject the input into the hidden PDF template
-            document.getElementById('outName').innerText = name || 'N/A';
-            document.getElementById('outProject').innerText = project || 'No description provided.';
-            document.getElementById('outDate').innerText = date;
+            if (!leftSelect || !rightSelect) {
+                showMessage("Please select both a left and right team logo to generate the overlay.");
+                return;
+            }
 
-            // 3. Select the template and make it temporarily visible for the engine
-            const element = document.getElementById('pdf-template');
-            element.style.display = 'block';
+            // UI feedback
+            const originalBtnText = btn.innerHTML;
+            btn.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+            `;
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
 
-            // 4. Set PDF formatting options
-            const options = {
-                margin:       0.5,
-                filename:     'Project_Summary.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 }, // Higher scale for better text resolution
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            const template = document.getElementById('pdf-template');
+            
+            // CRITICAL FIX: Temporarily remove the CSS scale transform so html2pdf renders 1:1 pixel exact
+            template.style.transform = 'scale(1)';
+
+            // Explicit pixel sizing for reliable overlay output
+            const opt = {
+                margin:       0,
+                filename:     `Overlay_${leftSelect.split('.')[0]}_vs_${rightSelect.split('.')[0]}.pdf`,
+                image:        { type: 'jpeg', quality: 1.0 },
+                html2canvas:  { 
+                    scale: 1, // Don't artificially scale, just capture 1920x250 exactly
+                    backgroundColor: '#0f172a',
+                    useCORS: true,
+                    logging: false
+                },
+                jsPDF: { 
+                    unit: 'px', 
+                    format: [1920, 250], 
+                    orientation: 'landscape',
+                    hotfixes: ["px_scaling"]
+                }
             };
 
-            // 5. Generate the PDF, then hide the template again
-            html2pdf().set(options).from(element).save().then(() => {
-                element.style.display = 'none';
+            // Generate
+            html2pdf().set(opt).from(template).save().then(() => {
+                // Restore scale and UI
+                resizePreview();
+                btn.innerHTML = originalBtnText;
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                showMessage("Overlay successfully downloaded!", false);
+            }).catch(err => {
+                console.error('Error:', err);
+                resizePreview();
+                btn.innerHTML = originalBtnText;
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                showMessage("Failed to generate PDF. Make sure your browser allows local image access.");
             });
         }
     </script>
-
 </body>
 </html>
