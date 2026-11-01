@@ -3,331 +3,322 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stream Overlay Generator</title>
-    
-    <!-- Load Tailwind CSS for UI styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Load html2pdf.js for PDF generation -->
+    <title>Stream Overlay Generator - Pro Style</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    
     <style>
-        /* 
-         * Custom styles for the PDF template / Live Preview. 
-         * Fixed strictly at 1920x250px to match standard stream overlay dimensions.
-         */
-        #pdf-template {
-            width: 1920px;
-            height: 250px;
-            background: linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-            box-sizing: border-box;
-            border-top: 8px solid #2563eb;
-            overflow: hidden;
-            font-family: 'Inter', sans-serif;
+        @import url('https://fonts.googleapis.com/css2?family=Teko:wght@500;700&display=swap');
+        
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; background: #121212; color: #fff; }
+        
+        /* Left Panel - Settings */
+        .controls { width: 35%; padding: 25px; background: #1e1e1e; border-right: 1px solid #333; overflow-y: auto; box-sizing: border-box; }
+        h2 { margin-top: 0; font-size: 20px; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 20px; }
+        .section { margin-bottom: 25px; background: #252525; padding: 15px; border-radius: 8px; border: 1px solid #333; }
+        .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .form-group { flex: 1; }
+        label { display: block; margin-bottom: 5px; font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+        input, select { width: 100%; padding: 8px; background: #121212; border: 1px solid #444; color: #fff; border-radius: 4px; box-sizing: border-box; }
+        input[type="color"] { padding: 2px; height: 35px; cursor: pointer; }
+        input:focus, select:focus { border-color: #007bff; outline: none; }
+        button { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #0056b3; }
+
+        /* Right Panel - Live Preview */
+        .preview-container { width: 65%; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; background: #0a0a0a; }
+        .preview-label { margin-bottom: 15px; color: #888; letter-spacing: 2px; text-transform: uppercase; font-size: 14px; }
+        
+        .overlay-preview-wrapper {
+            width: 100%;
+            max-width: 1400px;
+            aspect-ratio: 1920 / 250;
             position: relative;
-            transform-origin: center center;
-            /* Shadow for the preview mode */
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            border-radius: 4px;
-        }
-        
-        .overlay-content {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 100%;
-            padding: 0 120px;
-        }
-
-        .team-logo {
-            height: 170px;
-            width: 170px;
-            object-fit: contain;
-            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.6));
-            opacity: 0.2; /* Default faded state until selected */
-            transition: opacity 0.3s ease;
-        }
-        
-        .team-logo.active {
-            opacity: 1.0;
-        }
-
-        .center-wrapper {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            display: flex;
+            align-items: flex-end;
             justify-content: center;
-            align-items: center;
-            height: 210px;
-            width: 210px;
-            background: radial-gradient(circle, rgba(30,41,59,0.8) 0%, rgba(15,23,42,0) 70%);
-            border-radius: 50%;
         }
 
-        .center-logo {
-            height: 190px;
-            width: 190px;
-            object-fit: contain;
-            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.8));
+        /* The styles below are shared between the preview and the hidden PDF engine to guarantee identical rendering */
+        .overlay-master {
+            width: 100%; height: 100%; position: relative;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Teko', sans-serif; /* Blocky athletic font */
+        }
+
+        /* Outer Orange-to-Blue Gradient Border */
+        .gradient-border-box {
+            width: 95%; height: 65%;
+            background: linear-gradient(90deg, #ff7e00, #0055ff);
+            padding: 4px;
+            border-radius: 12px;
+            display: flex;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        /* Inner Background (Blurred city/texture simulator) */
+        .inner-bg {
+            width: 100%; height: 100%;
+            background: linear-gradient(rgba(15, 25, 35, 0.75), rgba(15, 25, 35, 0.75)), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.1"><rect width="100" height="100" fill="%23fff"/><circle cx="50" cy="50" r="40" fill="%23000"/></svg>');
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 15px; box-sizing: border-box;
+        }
+
+        /* Team Gradients & Boxes */
+        .team-panel {
+            display: flex; align-items: center; justify-content: space-between;
+            height: 75%; width: 38%;
+            border: 2px solid rgba(255,255,255,0.8);
+            border-radius: 8px;
+            padding: 0 20px; box-sizing: border-box;
         }
         
-        .glow-effect {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 400px;
-            height: 250px;
-            background: radial-gradient(ellipse at center, rgba(37, 99, 235, 0.3) 0%, rgba(15,23,42,0) 60%);
-            pointer-events: none;
+        .details-col { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .team-name { font-size: 2.8vw; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; line-height: 1; border-bottom: 3px solid #fff; padding-bottom: 2px; margin-bottom: 2px; }
+        .team-record { font-size: 1.5vw; font-weight: 500; letter-spacing: 3px; line-height: 1; color: #e0e0e0; }
+        .team-score { font-size: 3.5vw; font-weight: 700; line-height: 1; }
+
+        /* Logo Boxes */
+        .logo-box {
+            background: radial-gradient(circle, #ffffff, #e0e0e0);
+            height: 90%; aspect-ratio: 1/1;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+            padding: 5px; box-sizing: border-box;
+            border: 1px solid #ccc;
+        }
+        .logo-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        /* Absolute Center Crest */
+        .center-crest {
+            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+            height: 90%; width: auto; object-fit: contain;
+            filter: drop-shadow(0px 8px 12px rgba(0,0,0,0.7));
+            z-index: 10;
         }
 
-        /* Message Box Transitions */
-        #messageBox {
-            transition: opacity 0.3s ease, transform 0.3s ease;
+        /* --- PDF Engine Exact Pixel Overrides --- */
+        #pdf-template {
+            position: absolute; left: -9999px; top: -9999px;
+            width: 1920px; height: 250px;
         }
-        #messageBox.hidden-msg {
-            opacity: 0;
-            transform: translate(-50%, 20px);
-            pointer-events: none;
-        }
+        #pdf-template .gradient-border-box { height: 160px; border-radius: 16px; padding: 5px; }
+        #pdf-template .inner-bg { border-radius: 11px; padding: 0 25px; }
+        #pdf-template .team-panel { height: 120px; border: 3px solid rgba(255,255,255,0.8); padding: 0 40px; }
+        #pdf-template .team-name { font-size: 55px; border-bottom: 4px solid #fff; padding-bottom: 4px; margin-bottom: 4px; }
+        #pdf-template .team-record { font-size: 30px; }
+        #pdf-template .team-score { font-size: 70px; }
+        #pdf-template .logo-box { height: 140px; border-radius: 12px; padding: 10px; }
+        #pdf-template .center-crest { height: 230px; }
     </style>
 </head>
-<body class="bg-slate-900 h-screen w-screen overflow-hidden text-slate-200 flex flex-col md:flex-row font-sans antialiased">
+<body>
 
-    <!-- Left Sidebar: Settings Panel -->
-    <aside class="w-full md:w-96 flex-shrink-0 bg-slate-800 border-r border-slate-700 flex flex-col h-full z-10 shadow-2xl">
-        <div class="bg-gradient-to-r from-blue-700 to-indigo-800 p-6 text-white">
-            <h1 class="text-2xl font-bold tracking-tight">Overlay Builder</h1>
-            <p class="text-blue-200 text-sm mt-1">Configure your match overlay</p>
-        </div>
-
-        <div class="p-6 space-y-6 flex-1 overflow-y-auto">
-            
-            <!-- Left Team Logo Selection -->
-            <div>
-                <label for="leftLogoSelect" class="block text-sm font-medium text-slate-300 mb-2">Left Team Logo</label>
-                <select id="leftLogoSelect" onchange="updatePreview()" class="w-full px-4 py-3 rounded-lg border border-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm bg-slate-700 text-white">
-                    <option value="" disabled selected>-- Select Left Team --</option>
-                    <option value="AKR.png">AKR</option>
-                    <option value="ANC.png">ANC</option>
-                    <option value="ASH.png">ASH</option>
-                    <option value="ATL.png">ATL</option>
-                    <option value="BAL.png">BAL</option>
-                    <option value="CHI.png">CHI</option>
-                    <option value="CIN.png">CIN</option>
-                    <option value="DEN.png">DEN</option>
-                    <option value="DET.png">DET</option>
-                    <option value="EDM.png">EDM</option>
-                </select>
-            </div>
-
-            <!-- Right Team Logo Selection -->
-            <div>
-                <label for="rightLogoSelect" class="block text-sm font-medium text-slate-300 mb-2">Right Team Logo</label>
-                <select id="rightLogoSelect" onchange="updatePreview()" class="w-full px-4 py-3 rounded-lg border border-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm bg-slate-700 text-white">
-                    <option value="" disabled selected>-- Select Right Team --</option>
-                    <option value="AKR.png">AKR</option>
-                    <option value="ANC.png">ANC</option>
-                    <option value="ASH.png">ASH</option>
-                    <option value="ATL.png">ATL</option>
-                    <option value="BAL.png">BAL</option>
-                    <option value="CHI.png">CHI</option>
-                    <option value="CIN.png">CIN</option>
-                    <option value="DEN.png">DEN</option>
-                    <option value="DET.png">DET</option>
-                    <option value="EDM.png">EDM</option>
-                </select>
-            </div>
-
-        </div>
-
-        <!-- Action Area -->
-        <div class="p-6 border-t border-slate-700 bg-slate-800/50">
-            <button onclick="buildAndDownloadPDF()" id="downloadBtn" 
-                class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg hover:shadow-blue-500/25 transition-all active:scale-[0.98]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Download Overlay PDF
-            </button>
-        </div>
-    </aside>
-
-    <!-- Right Main: Live Preview Panel -->
-    <main class="flex-1 bg-slate-900 flex flex-col relative overflow-hidden">
-        <div class="absolute top-6 left-6 z-10 flex items-center gap-2 text-slate-400">
-            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span class="text-sm font-semibold tracking-wide uppercase">Live Preview</span>
-        </div>
+    <!-- Left Panel: Settings -->
+    <div class="controls">
+        <h2>Overlay Settings</h2>
         
-        <!-- Wrapper to center and scale the fixed 1920x250 template -->
-        <div id="preview-wrapper" class="flex-1 w-full h-full flex items-center justify-center p-8">
-            
-            <!-- THE PDF TEMPLATE (Also used as the live preview) -->
-            <div id="pdf-template">
-                <div class="glow-effect"></div>
-                
-                <div class="overlay-content">
-                    <!-- Left Logo -->
-                    <img id="outLeftLogo" class="team-logo" src="" alt="Left Team">
-                    
-                    <!-- Center CSA Logo (Required) -->
-                    <div class="center-wrapper">
-                        <img id="centerLogo" src="" class="center-logo" alt="CSA League Logo">
-                    </div>
-
-                    <!-- Right Logo -->
-                    <img id="outRightLogo" class="team-logo" src="" alt="Right Team">
-                </div>
+        <div class="section">
+            <div class="form-row">
+                <div class="form-group"><label>Left Team Name</label><input type="text" id="leftName" value="AFFINITY" onkeyup="updatePreview()"></div>
+                <div class="form-group"><label>Left Score</label><input type="number" id="leftScore" value="7" onkeyup="updatePreview()" onchange="updatePreview()"></div>
             </div>
-
+            <div class="form-row">
+                <div class="form-group"><label>Left Record</label><input type="text" id="leftRecord" value="6-4" onkeyup="updatePreview()"></div>
+                <div class="form-group"><label>Left Color</label><input type="color" id="leftColor" value="#990000" oninput="updatePreview()"></div>
+            </div>
+            <div class="form-group">
+                <label>Left Team Logo</label>
+                <select id="leftLogo" onchange="updatePreview()"></select>
+            </div>
         </div>
-    </main>
 
-    <!-- Custom Message Box (Alert Replacement) -->
-    <div id="messageBox" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-slate-800 border-l-4 border-red-500 text-white px-6 py-4 rounded shadow-2xl hidden-msg flex items-center gap-3">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        <span id="messageText" class="font-medium"></span>
+        <div class="section">
+            <div class="form-row">
+                <div class="form-group"><label>Right Team Name</label><input type="text" id="rightName" value="DICE" onkeyup="updatePreview()"></div>
+                <div class="form-group"><label>Right Score</label><input type="number" id="rightScore" value="13" onkeyup="updatePreview()" onchange="updatePreview()"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Right Record</label><input type="text" id="rightRecord" value="4-6" onkeyup="updatePreview()"></div>
+                <div class="form-group"><label>Right Color</label><input type="color" id="rightColor" value="#b8860b" oninput="updatePreview()"></div>
+            </div>
+            <div class="form-group">
+                <label>Right Team Logo</label>
+                <select id="rightLogo" onchange="updatePreview()"></select>
+            </div>
+        </div>
+
+        <button onclick="generatePDF()">Download Overlay PDF</button>
     </div>
 
-    <!-- Application Logic -->
+    <!-- Right Panel: Live Preview -->
+    <div class="preview-container">
+        <div class="preview-label">Live Preview</div>
+        <div class="overlay-preview-wrapper">
+            <div class="overlay-master">
+                <div class="gradient-border-box">
+                    <div class="inner-bg">
+                        
+                        <!-- Left Team -->
+                        <div class="team-panel left-panel-bg">
+                            <div class="team-score" id="prev-left-score">7</div>
+                            <div class="details-col">
+                                <div class="team-name" id="prev-left-name">AFFINITY</div>
+                                <div class="team-record" id="prev-left-record">6-4</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Left Logo Box -->
+                        <div class="logo-box"><img id="prev-left-img" src="" alt=""></div>
+                        
+                        <!-- Center Spacing Area -->
+                        <div style="width: 15%;"></div>
+
+                        <!-- Right Logo Box -->
+                        <div class="logo-box"><img id="prev-right-img" src="" alt=""></div>
+
+                        <!-- Right Team -->
+                        <div class="team-panel right-panel-bg">
+                            <div class="details-col">
+                                <div class="team-name" id="prev-right-name">DICE</div>
+                                <div class="team-record" id="prev-right-record">4-6</div>
+                            </div>
+                            <div class="team-score" id="prev-right-score">13</div>
+                        </div>
+
+                    </div>
+                </div>
+                <!-- Absolute Center Crest -->
+                <img class="center-crest" src="csa5.png" alt="Center Crest">
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Exact 1920x250 Layout for PDF Engine -->
+    <div id="pdf-template" class="overlay-master">
+        <div class="gradient-border-box">
+            <div class="inner-bg">
+                
+                <div class="team-panel left-panel-bg">
+                    <div class="team-score" id="pdf-left-score">7</div>
+                    <div class="details-col">
+                        <div class="team-name" id="pdf-left-name">AFFINITY</div>
+                        <div class="team-record" id="pdf-left-record">6-4</div>
+                    </div>
+                </div>
+                
+                <div class="logo-box"><img id="pdf-left-img" src=""></div>
+                <div style="width: 15%;"></div>
+                <div class="logo-box"><img id="pdf-right-img" src=""></div>
+
+                <div class="team-panel right-panel-bg">
+                    <div class="details-col">
+                        <div class="team-name" id="pdf-right-name">DICE</div>
+                        <div class="team-record" id="pdf-right-record">4-6</div>
+                    </div>
+                    <div class="team-score" id="pdf-right-score">13</div>
+                </div>
+
+            </div>
+        </div>
+        <img class="center-crest" src="csa5.png">
+    </div>
+
     <script>
-        // --- GITHUB ASSET CONFIGURATION ---
-        const GITHUB_BASE_URL = "https://raw.githubusercontent.com/imckinne/Logos/Logos/";
+        // Populate Logo Dropdowns
+        const logos = [
+            "AKR.png", "AKR_2.png", "ANC.png", "ANC_2.png", "ASH.png", "ASH_2.png", "ATL.png", "ATL_2.png",
+            "BAL.png", "BAL_2.png", "CHI.png", "CHI_2.png", "CIN.png", "CIN_2.png", "DEN.png", "DEN_2.png",
+            "DET.png", "DET_2.png", "EDM.png", "EDM_2.png", "HON.png", "HOU.png", "KCT.png", "LAT.png",
+            "LIT.png", "MAD.png", "MCM.png", "MIN.png", "MKE.png", "NOJ.png", "OKC.png", "PHX.png",
+            "PIT.png", "RAL.png", "RCH.png", "ROC.png", "SAN.png", "SAV.png", "SDG.png", "SEA.png",
+            "TOR.png", "VBN.png"
+        ];
 
-        // Custom message system
-        let messageTimeout;
-        function showMessage(msg, isError = true) {
-            const box = document.getElementById('messageBox');
-            const text = document.getElementById('messageText');
-            
-            text.innerText = msg;
-            
-            // Adjust border color based on type
-            box.classList.remove('border-red-500', 'border-blue-500');
-            box.classList.add(isError ? 'border-red-500' : 'border-blue-500');
+        const leftSelect = document.getElementById('leftLogo');
+        const rightSelect = document.getElementById('rightLogo');
 
-            box.classList.remove('hidden-msg');
-            
-            clearTimeout(messageTimeout);
-            messageTimeout = setTimeout(() => {
-                box.classList.add('hidden-msg');
-            }, 4000);
-        }
-
-        // Live updating the preview
-        function updatePreview() {
-            const leftSelect = document.getElementById('leftLogoSelect').value;
-            const rightSelect = document.getElementById('rightLogoSelect').value;
-            
-            const leftImg = document.getElementById('outLeftLogo');
-            const rightImg = document.getElementById('outRightLogo');
-
-            if (leftSelect) {
-                leftImg.src = GITHUB_BASE_URL + leftSelect;
-                leftImg.classList.add('active');
-            }
-            if (rightSelect) {
-                rightImg.src = GITHUB_BASE_URL + rightSelect;
-                rightImg.classList.add('active');
-            }
-        }
-
-        // Handle scaling the 1920x250 div to fit nicely inside the preview wrapper
-        function resizePreview() {
-            const wrapper = document.getElementById('preview-wrapper');
-            const template = document.getElementById('pdf-template');
-            
-            // 40px padding subtraction
-            const wrapperWidth = wrapper.clientWidth - 80; 
-            const wrapperHeight = wrapper.clientHeight - 80;
-            
-            // Calculate scale required to fit both width and height
-            const scaleX = wrapperWidth / 1920;
-            const scaleY = wrapperHeight / 250;
-            const scale = Math.min(scaleX, scaleY);
-            
-            template.style.transform = `scale(${scale})`;
-        }
-
-        // Listen for window resize to keep preview perfectly fitted
-        window.addEventListener('resize', resizePreview);
-        
-        // Initial call
-        window.addEventListener('DOMContentLoaded', () => {
-            resizePreview();
-            
-            // Load the center logo from GitHub on startup
-            document.getElementById('centerLogo').src = GITHUB_BASE_URL + 'csa5.png';
+        logos.forEach(logo => {
+            leftSelect.add(new Option(logo.replace('.png', ''), logo));
+            rightSelect.add(new Option(logo.replace('.png', ''), logo));
         });
 
-        // PDF Generation
-        function buildAndDownloadPDF() {
-            const leftSelect = document.getElementById('leftLogoSelect').value;
-            const rightSelect = document.getElementById('rightLogoSelect').value;
-            const btn = document.getElementById('downloadBtn');
+        // Set default right logo (simulating 'OKC/DICE')
+        rightSelect.value = "OKC.png";
 
-            if (!leftSelect || !rightSelect) {
-                showMessage("Please select both a left and right team logo to generate the overlay.");
-                return;
-            }
-
-            // UI feedback
-            const originalBtnText = btn.innerHTML;
-            btn.innerHTML = `
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Processing...
-            `;
-            btn.disabled = true;
-            btn.classList.add('opacity-75', 'cursor-not-allowed');
-
-            const template = document.getElementById('pdf-template');
+        // Sync inputs to the UI and hidden PDF template
+        function updatePreview() {
+            const lLogo = document.getElementById('leftLogo').value;
+            const rLogo = document.getElementById('rightLogo').value;
+            const lName = document.getElementById('leftName').value || 'TEAM A';
+            const rName = document.getElementById('rightName').value || 'TEAM B';
+            const lScore = document.getElementById('leftScore').value || '0';
+            const rScore = document.getElementById('rightScore').value || '0';
+            const lRecord = document.getElementById('leftRecord').value || '0-0';
+            const rRecord = document.getElementById('rightRecord').value || '0-0';
             
-            // CRITICAL FIX: Temporarily remove the CSS scale transform so html2pdf renders 1:1 pixel exact
-            template.style.transform = 'scale(1)';
+            // Handle Custom Colors (fading into black)
+            const lColor = document.getElementById('leftColor').value;
+            const rColor = document.getElementById('rightColor').value;
+            const leftGradients = document.querySelectorAll('.left-panel-bg');
+            const rightGradients = document.querySelectorAll('.right-panel-bg');
+            
+            leftGradients.forEach(el => el.style.background = `linear-gradient(to right, ${lColor}, #000000)`);
+            rightGradients.forEach(el => el.style.background = `linear-gradient(to right, #000000, ${rColor})`);
 
-            // Explicit pixel sizing for reliable overlay output
-            const opt = {
-                margin:       0,
-                filename:     'overlay.pdf',
-                image:        { type: 'png', quality: 1 },
-                html2canvas:  { 
-                    scale: 2, 
-                    useCORS: true,
-                    backgroundColor: null
-                },
-                jsPDF: { 
-                    unit: 'px', 
-                    format: [1920, 250], 
-                    orientation: 'landscape'
-                }
-            };
+            // Update visible preview
+            document.getElementById('prev-left-img').src = lLogo;
+            document.getElementById('prev-right-img').src = rLogo;
+            document.getElementById('prev-left-name').innerText = lName;
+            document.getElementById('prev-right-name').innerText = rName;
+            document.getElementById('prev-left-score').innerText = lScore;
+            document.getElementById('prev-right-score').innerText = rScore;
+            document.getElementById('prev-left-record').innerText = lRecord;
+            document.getElementById('prev-right-record').innerText = rRecord;
 
-            // Generate
-            html2pdf().set(opt).from(template).save().then(() => {
-                // Restore scale and UI
-                resizePreview();
-                btn.innerHTML = originalBtnText;
-                btn.disabled = false;
-                btn.classList.remove('opacity-75', 'cursor-not-allowed');
-                showMessage("Overlay successfully downloaded!", false);
-            }).catch(err => {
-                console.error('Error:', err);
-                resizePreview();
-                btn.innerHTML = originalBtnText;
-                btn.disabled = false;
-                btn.classList.remove('opacity-75', 'cursor-not-allowed');
-                showMessage("Failed to generate PDF. Make sure your browser allows local image access.");
+            // Update hidden PDF engine layout
+            document.getElementById('pdf-left-img').src = lLogo;
+            document.getElementById('pdf-right-img').src = rLogo;
+            document.getElementById('pdf-left-name').innerText = lName;
+            document.getElementById('pdf-right-name').innerText = rName;
+            document.getElementById('pdf-left-score').innerText = lScore;
+            document.getElementById('pdf-right-score').innerText = rScore;
+            document.getElementById('pdf-left-record').innerText = lRecord;
+            document.getElementById('pdf-right-record').innerText = rRecord;
+        }
+
+        // Generate the PDF
+        function generatePDF() {
+            const element = document.getElementById('pdf-template');
+            
+            // Force the browser to wait until all chosen images buffer into memory
+            const images = element.querySelectorAll('img');
+            const imageLoadPromises = Array.from(images).map(img => {
+                return new Promise((resolve) => {
+                    if (img.complete) return resolve();
+                    img.onload = resolve;
+                    img.onerror = resolve; // Continue even if an image breaks
+                });
+            });
+
+            Promise.all(imageLoadPromises).then(() => {
+                const opt = {
+                    margin: 0,
+                    filename: 'Pro_Stream_Overlay.pdf',
+                    image: { type: 'png', quality: 1 },
+                    html2canvas: { scale: 1, width: 1920, height: 250, useCORS: true, backgroundColor: null }, 
+                    jsPDF: { unit: 'px', format: [1920, 250], orientation: 'landscape' }
+                };
+                html2pdf().set(opt).from(element).save();
             });
         }
+
+        // Initialize on load
+        window.onload = () => {
+            // Load Google Font dynamically before rendering
+            document.fonts.ready.then(updatePreview);
+        };
     </script>
+
 </body>
 </html>
