@@ -176,7 +176,7 @@
                     
                     <!-- Center CSA Logo (Required) -->
                     <div class="center-wrapper">
-                        <img src="csa5.png" class="center-logo" alt="CSA League Logo">
+                        <img id="centerLogo" src="" class="center-logo" alt="CSA League Logo">
                     </div>
 
                     <!-- Right Logo -->
@@ -197,6 +197,9 @@
 
     <!-- Application Logic -->
     <script>
+        // --- GITHUB ASSET CONFIGURATION ---
+        const GITHUB_BASE_URL = "https://raw.githubusercontent.com/imckinne/Logos/Logos/";
+
         // Custom message system
         let messageTimeout;
         function showMessage(msg, isError = true) {
@@ -226,11 +229,11 @@
             const rightImg = document.getElementById('outRightLogo');
 
             if (leftSelect) {
-                leftImg.src = leftSelect;
+                leftImg.src = GITHUB_BASE_URL + leftSelect;
                 leftImg.classList.add('active');
             }
             if (rightSelect) {
-                rightImg.src = rightSelect;
+                rightImg.src = GITHUB_BASE_URL + rightSelect;
                 rightImg.classList.add('active');
             }
         }
@@ -254,8 +257,14 @@
 
         // Listen for window resize to keep preview perfectly fitted
         window.addEventListener('resize', resizePreview);
+        
         // Initial call
-        window.addEventListener('DOMContentLoaded', resizePreview);
+        window.addEventListener('DOMContentLoaded', () => {
+            resizePreview();
+            
+            // Load the center logo from GitHub on startup
+            document.getElementById('centerLogo').src = GITHUB_BASE_URL + 'csa5.png';
+        });
 
         // PDF Generation
         function buildAndDownloadPDF() {
@@ -288,19 +297,17 @@
             // Explicit pixel sizing for reliable overlay output
             const opt = {
                 margin:       0,
-                filename:     `Overlay_${leftSelect.split('.')[0]}_vs_${rightSelect.split('.')[0]}.pdf`,
-                image:        { type: 'jpeg', quality: 1.0 },
+                filename:     'overlay.pdf',
+                image:        { type: 'png', quality: 1 },
                 html2canvas:  { 
-                    scale: 1, // Don't artificially scale, just capture 1920x250 exactly
-                    backgroundColor: '#0f172a',
+                    scale: 2, 
                     useCORS: true,
-                    logging: false
+                    backgroundColor: null
                 },
                 jsPDF: { 
                     unit: 'px', 
                     format: [1920, 250], 
-                    orientation: 'landscape',
-                    hotfixes: ["px_scaling"]
+                    orientation: 'landscape'
                 }
             };
 
